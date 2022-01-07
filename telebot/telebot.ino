@@ -143,7 +143,7 @@ void loop()
   }
 
   taskLight(tasks, currLength);
-  delay(50);
+  delay(300);
 }
 
 String getTimetable(String link){
@@ -169,9 +169,12 @@ void addMod(int id, mod modList[], int* length){
   filter["semesterData"][0]["timetable"][0] = true;
   filter["semesterData"][0]["semester"] = true;
   myBot.sendMessage(id, "Enter a Module Code");
+  delay(BOT_MIN_REFRESH_DELAY);
   while(myBot.getNewMessage(m) != CTBotMessageText){delay(BOT_MIN_REFRESH_DELAY);}
   currmod.modCode = String(m.text);
+  delay(BOT_MIN_REFRESH_DELAY);
   myBot.sendMessage(id, "Enter the class code for the module " + currmod.modCode);
+  delay(BOT_MIN_REFRESH_DELAY);
   while(myBot.getNewMessage(m) != CTBotMessageText){delay(BOT_MIN_REFRESH_DELAY);}
   currmod.classNo = String(m.text);
   myBot.sendMessage(id, "The module " + currmod.modCode + " with class number " + currmod.classNo + " has been added.");
@@ -389,7 +392,7 @@ void processDoneTask(unsigned int chatId)
   myBot.sendMessage(chatId, "Select index of task to be marked as done\n" + tasksStr);
 
   TBMessage msg;
-  while (myBot.getNewMessage(msg) != CTBotMessageText)
+  while (!myBot.getNewMessage(msg))
   {
     delay(BOT_MIN_REFRESH_DELAY);
   }
@@ -398,7 +401,7 @@ void processDoneTask(unsigned int chatId)
   while (selectedIdx < 1 || selectedIdx > currLength)
   {
     myBot.sendMessage(chatId, "Invalid index, please send again");
-    while (myBot.getNewMessage(msg) != CTBotMessageText)
+    while (!myBot.getNewMessage(msg))
     {
       delay(BOT_MIN_REFRESH_DELAY);
     }
@@ -464,7 +467,7 @@ String getAlertsString()
   {
     String type = (aTypeL[i] == 0) ? "Water" : "Exercise";
     String hour = (aHour[i] < 10) ? "0" + String(aHour[i]) : String(aHour[i]);
-    String min = (aMin[i] < 10) ? "0" + String(aMin[i]) : String(aMin[i]);
+    String min = (aMin[i] < 10) ? "0" + String(aMin[i]): String(aMin[i]);
 
     alertStr += String(i + 1) + ": ";
 
