@@ -12,11 +12,11 @@ Team **#96A Hackuna Matata**
 
 ## Description
 
-Our bot is a 3 in 1 hardware system that infuses convenience and simplicity, making it fun and easy to keep your life organised.
+Our project implements a Telegram bot that controls a 3-in-1 hardware system on chip that infuses convenience and simplicity, making it fun and easy to keep your life organised.
 
 ## Components
 
-Our bot is made up of three parts - a Module Timetable Reminder System, a Healthy Living Encouragement Tool as well as a Task Prioritization Organiser.
+The Telegram bot is made up of three parts - a Module Timetable Reminder System, a Healthy Living Encouragement Tool as well as a Task Prioritization Organiser.
 
 ### Timetable Reminder System
 
@@ -62,3 +62,5 @@ The [Arduino IDE](https://www.arduino.cc/en/software) and C++ are used to write 
 
 - CTBot: Telegram bot to handle communcation between ESP8266 and user.
 - FastLED: communication and command between ESP8266 and the connected LED strip.
+
+Source file located in (`LEDTaskBot/telebot/telebot.ino`)[telebot/telebot.ino].
