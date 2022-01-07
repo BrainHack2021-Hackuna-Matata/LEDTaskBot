@@ -151,7 +151,7 @@ void processNewMessage(TBMessage msg)
     processDoneTask(chatId);
   }
 
-  else if (text == "/exerise") {
+  else if (text == "/exercise") {
     processNewAlert(chatId,1);
   }
 
