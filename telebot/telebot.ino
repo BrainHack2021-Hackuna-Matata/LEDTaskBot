@@ -45,8 +45,18 @@ struct Task
   byte prio;
 };
 
+struct Alert
+{
+  //time
+  //rung
+  //alert
+}
+
+
 struct Task tasks[MAX_LENGTH];
+struct Alert alerts[MAX_LENGTH];
 unsigned int currLength = 0;
+unsigned int aLength = 0;
 const String PRIORITY_STRING_MAP[3] = {"Low", "Med", "High"};
 
 void setup()
@@ -151,7 +161,20 @@ void processNewMessage(TBMessage msg)
   {
     processDoneTask(chatId);
   }
-  else if (text == "/help")
+
+  else if (text == "/exerise") {
+    processNewAlert(chatId,1);
+  }
+
+  else if (text == "/water") {
+    processNewAlert(chatId,0);
+  }
+  
+  else if (text == "/alertlist") {
+    //TODO
+  }
+
+  else if (text == "/help" || text == "/start")
   {
     myBot.sendMessage(chatId, getHelpString());
   }
@@ -159,6 +182,48 @@ void processNewMessage(TBMessage msg)
   {
     myBot.sendMessage(chatId, "Unknown command. Type /help for help.");
   }
+}
+
+void processNewAlert(unsigned int chatId, byte aType) {
+  TBMessage msg;
+  int num 
+  myBot.sendMessage(chatId, "Alerts will be randmised between 0900 to 1700\n.Enter number of alert (1(default) to 5):");
+  while (myBot.getNewMessage(msg) != CTBotMessageText)
+  {
+    delay(BOT_MIN_REFRESH_DELAY);
+  }
+  if (msg.text.length() > 1) {
+    num 1= 1;
+  }
+  else {
+    (msg.text.toInt() == 0) ? num = 1 : num = msg.text.toInt();
+  }
+  
+  unsigned int exitCode = addAlert(num, aType);
+
+  if (exitCode)
+  {
+    myBot.sendMessage(chatId, "Failed to add alert");
+  }
+  else
+  {
+    myBot.sendMessage(chatId, "Alert added successfully");
+  }
+  
+}
+
+unsigned int addAlert(int num, byte aType)
+{
+  if (aLength  < MAX_LENGTH)
+  {
+    // randomise time for alert
+    tasks[aLength].type = aType;
+    aLength++;
+    
+    return 0;
+  }
+
+  return 1;
 }
 
 void processNewTask(unsigned int chatId)
