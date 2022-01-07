@@ -38,6 +38,11 @@ CTBot myBot;
 const unsigned long BOT_MIN_REFRESH_DELAY = 50;
 unsigned long botLastRefreshed;
 
+int aHour[10];
+int aMin[10];
+byte aTypeL[10];
+byte aLength = 0;
+
 /*
 Task list parameters
 */
@@ -131,17 +136,8 @@ void processNewMessage(TBMessage msg)
   Serial.println(fromUserName);
   Serial.println(text);
 
-  if (text == "/on")
-  {
-    myBot.sendMessage(chatId, "LED is now ON!");
-    digitalWrite(LED_BUILTIN, LOW);
-  }
-  else if (text == "/off")
-  {
-    myBot.sendMessage(chatId, "LED is now OFF!");
-    digitalWrite(LED_BUILTIN, HIGH);
-  }
-  else if (text == "/list")
+
+  if (text == "/list")
   {
     String taskStr = "Here are your tasks:\n" + getTasksString();
     myBot.sendMessage(chatId, taskStr);
@@ -154,7 +150,21 @@ void processNewMessage(TBMessage msg)
   {
     processDoneTask(chatId);
   }
-  else if (text == "/help")
+
+  else if (text == "/exerise") {
+    processNewAlert(chatId,1);
+  }
+
+  else if (text == "/water") {
+    processNewAlert(chatId,0);
+  }
+
+  else if (text == "/alertlist") {
+    String alertStr = "Here are your alerts:\n" + getAlertsString();
+    myBot.sendMessage(chatId, alertStr);
+  }
+
+  else if (text == "/help" || text == "/start")
   {
     myBot.sendMessage(chatId, getHelpString());
   }
@@ -162,6 +172,48 @@ void processNewMessage(TBMessage msg)
   {
     myBot.sendMessage(chatId, "Unknown command. Type /help for help.");
   }
+}
+
+void processNewAlert(unsigned int chatId, byte aType) {
+  TBMessage msg;
+  int num; 
+  myBot.sendMessage(chatId, "Alerts will be randmised between 0900 to 1700.\nEnter number of alert (1(default) to 5):");
+  while (myBot.getNewMessage(msg) != CTBotMessageText)
+  {
+    delay(BOT_MIN_REFRESH_DELAY);
+  }
+  if (msg.text.length() > 1) {
+    num = 1;
+  }
+  else {
+    (msg.text.toInt() == 0) ? num = 1 : num = msg.text.toInt();
+  }
+  
+  unsigned int exitCode = addAlert(num, aType);
+
+  if (exitCode)
+  {
+    myBot.sendMessage(chatId, "Failed to add alert");
+  }
+  else
+  {
+    myBot.sendMessage(chatId, "Alert added successfully");
+  }
+}
+
+unsigned int addAlert(int num, byte aType)
+{
+  if (aLength + num < 10)
+  {
+    for (int i = 0; i<num; i++) {
+      aHour[aLength] = random(9,18);
+      aMin[aLength] = random(0,60);
+      aTypeL[aLength] = aType;
+      aLength++; 
+    }
+    return 0;
+  }
+  return 1;
 }
 
 void processNewTask(unsigned int chatId)
@@ -278,6 +330,21 @@ unsigned int markTaskDone(unsigned int idx)
   return 1;
 }
 
+String getAlertsString(){
+  if (aLength == 0) {
+    return "No tasks yet!";
+  }
+  String alertStr = "";
+
+  for (int i = 0; i < aLength; i++)
+  {
+    String type = (aTypeL[i] == 0) ? "Water" : "Exercise";
+    alertStr.concat(String(i + 1) + ": " + aHour[i] + ":" + aMin[i] + " [" + type + "]\n");
+  }
+
+  return alertStr;
+}
+
 String getTasksString()
 {
   if (currLength == 0)
@@ -297,7 +364,9 @@ String getTasksString()
 
 String getHelpString()
 {
-  return "Here are the available commands:\n/list to list all tasks\n/newtask to add a new task\n/donetask to mark a task as done\n";
+  String helpStr = "Here are the available commands:\n/list to list all tasks\n/newtask to add a new task\n/donetask to mark a task as done\n";
+  helpStr += "/exercise to create exercise alerts\n/water to create water alerts\n/alertlist to get your list of alerts";
+  return helpStr;
 }
 
 void printCurrentTime()
@@ -354,6 +423,7 @@ void alertLight(byte aType) {
 }
 
 void taskLight(Task tasks[], unsigned int numTask) {
+  FastLED.clear();
   byte high,med,low = 0;
   for (int i=0; i<numTask; i++){
     switch (tasks[i].prio) {
@@ -382,4 +452,3 @@ void taskLight(Task tasks[], unsigned int numTask) {
   }
   FastLED.show(); 
 }
-
