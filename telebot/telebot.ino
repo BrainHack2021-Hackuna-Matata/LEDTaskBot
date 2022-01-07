@@ -1,6 +1,7 @@
 #include <ArduinoJson.h>
 #include <CTBot.h>
 #include <ESP8266WiFi.h>
+#include <ESP8266HTTPClient.h>
 #include <FastLED.h>
 #include <NTPClient.h>
 #include <WiFiClientSecure.h>
@@ -52,6 +53,24 @@ struct Task
   byte prio;
 };
 
+struct times {
+  String modCode;
+  String classNo;
+  String startTime;
+  String day;
+};
+
+struct mod {
+  String modCode;
+  String classNo;
+};
+
+mod modList[10];
+times timetable[100];
+
+int length = 0;
+unsigned int numTimes = 0;
+
 struct Task tasks[MAX_LENGTH];
 unsigned int currLength = 0;
 const String PRIORITY_STRING_MAP[3] = {"Low", "Med", "High"};
@@ -65,7 +84,7 @@ void setup()
 
   //set up ledstrip
   FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, NUM_LEDS);
-  FastLED.setMaxPowerInVoltsAndMilliamps(5, 500);
+  FastLED.setMaxPowerInVoltsAndMilliamps(3, 120);
   FastLED.clear();
   FastLED.show();
   Serial.println("LED Setup");
@@ -73,6 +92,11 @@ void setup()
 
   // blocks until connects
   myBot.wifiConnect(WIFI_SSID, WIFI_PWD);
+
+    /*
+  Setup Telegram bot
+  */
+  myBot.setTelegramToken(TELE_BOT_TOKEN);
 
   if (myBot.testConnection())
   {
@@ -98,10 +122,7 @@ void setup()
   pinMode(LED_BUILTIN, OUTPUT);   // built in LED
   digitalWrite(LED_BUILTIN, LOW); // active LOW
 
-  /*
-  Setup Telegram bot
-  */
-  myBot.setTelegramToken(TELE_BOT_TOKEN);
+
 }
 
 void loop()
@@ -122,6 +143,89 @@ void loop()
   }
 
   taskLight(tasks, currLength);
+  delay(50);
+}
+
+String getTimetable(String link){
+  HTTPClient http;
+  WiFiClientSecure wifiClient;
+  wifiClient.setInsecure();   // don't do this! but who cares?
+  String payload = "";
+  http.begin(wifiClient, link.c_str());s
+  int httpResponseCode = http.GET();
+  if(httpResponseCode > 0){
+    payload = http.getString();
+  }
+  http.end();
+  return payload;
+}
+
+void addMod(int id, mod modList[], int* length){
+  TBMessage m;
+  mod currmod;
+  times time;
+  DynamicJsonDocument doc(4096);
+  StaticJsonDocument<200> filter;
+  filter["semesterData"][0]["timetable"][0] = true;
+  filter["semesterData"][0]["semester"] = true;
+  myBot.sendMessage(id, "Enter a Module Code");
+  while(myBot.getNewMessage(m) != CTBotMessageText){delay(BOT_MIN_REFRESH_DELAY);}
+  currmod.modCode = String(m.text);
+  myBot.sendMessage(id, "Enter the class code for the module " + currmod.modCode);
+  while(myBot.getNewMessage(m) != CTBotMessageText){delay(BOT_MIN_REFRESH_DELAY);}
+  currmod.classNo = String(m.text);
+  myBot.sendMessage(id, "The module " + currmod.modCode + " with class number " + currmod.classNo + " has been added.");
+  modList[*length] = currmod;
+  *length += 1;
+  String ddd = "Your lessons for this module are on: ";
+  String json = getTimetable("https://api.nusmods.com/v2/2021-2022/modules/" + currmod.modCode +".json");
+  deserializeJson(doc, json, DeserializationOption::Filter(filter));
+  int semester = 0;
+  Serial.println(String(doc["semesterData"][0]["semester"].as<unsigned int>()));
+  if(doc["semesterData"][0]["semester"].as<unsigned int>() == 1){
+    semester = 1;
+  }
+  for(int i = 0; i < doc["semesterData"][semester]["timetable"].as<JsonArray>().size(); i++){
+    if(currmod.classNo == doc["semesterData"][semester]["timetable"][i]["classNo"].as<String>()){
+      timetable[numTimes].modCode = currmod.modCode;
+      timetable[numTimes].classNo = currmod.classNo;
+      timetable[numTimes].startTime = doc["semesterData"][semester]["timetable"][i]["startTime"].as<String>();
+      timetable[numTimes].day = doc["semesterData"][semester]["timetable"][i]["day"].as<String>();
+      ddd += "\n\t" + currmod.modCode + " " + currmod.classNo + " " + String(timetable[numTimes].startTime) + " " + String(timetable[numTimes].day);
+      numTimes++;
+    }
+  }
+  // String s;
+  // serializeJson(doc, s);
+  myBot.sendMessage(id, ddd);
+}
+
+void listMods(int id, mod modList[]){
+  String ddd = "";
+  if(length == 0){
+    myBot.sendMessage(id, "There are no mods in your timetable.");
+  }
+  else{
+    ddd += "Here are your mods:";    
+    for(int i = 0; i < length; i++){
+      ddd += "\n" + String(i + 1) + ". \n\tModule Code: " + modList[i].modCode + "\n\tClass Number: " + modList[i].classNo;
+    }
+    myBot.sendMessage(id, ddd);
+  }
+}
+
+void listTimetable(int id, times timetable[]){
+  String ddd = "";
+  if(numTimes == 0){
+    myBot.sendMessage(id, "There are no mods in your timetable.");
+  }
+  else{
+    ddd += "Here are your mods:";
+    for(int i = 0; i < numTimes; i++){
+      ddd += "\n" + String(i + 1) + ". \n\tModule Code: " + timetable[i].modCode + "\n\tClass Number: " + timetable[i].classNo + "\n\tDay: " + timetable[i].day + "\n\tStart Time: " + timetable[i].startTime;
+    }
+    myBot.sendMessage(id, ddd);
+  }
 }
 
 void processNewMessage(TBMessage msg)
@@ -165,6 +269,16 @@ void processNewMessage(TBMessage msg)
     myBot.sendMessage(chatId, alertStr);
   }
 
+  else if(text == "/addmod"){
+    addMod(msg.sender.id, modList, &length);
+  }
+  else if(text == "/listmod"){
+    listMods(msg.sender.id, modList);
+  }
+  else if(text == "/listtt"){
+    listTimetable(msg.sender.id, timetable);
+  }
+
   else if (text == "/help" || text == "/start")
   {
     myBot.sendMessage(chatId, getHelpString());
@@ -179,7 +293,7 @@ void processNewAlert(unsigned int chatId, byte aType)
 {
   TBMessage msg;
   int num;
-  myBot.sendMessage(chatId, "Alerts will be randmised between 0900 to 1700.\nEnter number of alert [1 (default) to 5]:");
+  myBot.sendMessage(chatId, "Alerts will be randomised between 0900 to 1700.\nEnter number of alert [1 (default) to 5]:");
   while (myBot.getNewMessage(msg) != CTBotMessageText)
   {
     delay(BOT_MIN_REFRESH_DELAY);
