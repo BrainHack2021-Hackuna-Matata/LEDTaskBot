@@ -151,7 +151,7 @@ String getTimetable(String link){
   WiFiClientSecure wifiClient;
   wifiClient.setInsecure();   // don't do this! but who cares?
   String payload = "";
-  http.begin(wifiClient, link.c_str());s
+  http.begin(wifiClient, link.c_str());
   int httpResponseCode = http.GET();
   if(httpResponseCode > 0){
     payload = http.getString();
