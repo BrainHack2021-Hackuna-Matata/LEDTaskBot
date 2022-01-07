@@ -1,10 +1,10 @@
+#include <ArduinoJson.h>
+#include <CTBot.h>
 #include <ESP8266WiFi.h>
+#include <FastLED.h>
+#include <NTPClient.h>
 #include <WiFiClientSecure.h>
 #include <WiFiUDP.h>
-#include <NTPClient.h>
-#include <CTBot.h>
-#include <ArduinoJson.h>
-#include <FastLED.h>
 
 #define MAX_LENGTH 30
 
@@ -63,7 +63,7 @@ void setup()
   */
   Serial.begin(115200);
 
- //set up ledstrip
+  //set up ledstrip
   FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, NUM_LEDS);
   FastLED.setMaxPowerInVoltsAndMilliamps(5, 500);
   FastLED.clear();
@@ -97,7 +97,6 @@ void setup()
   */
   pinMode(LED_BUILTIN, OUTPUT);   // built in LED
   digitalWrite(LED_BUILTIN, LOW); // active LOW
-
 
   /*
   Setup Telegram bot
@@ -136,7 +135,6 @@ void processNewMessage(TBMessage msg)
   Serial.println(fromUserName);
   Serial.println(text);
 
-
   if (text == "/list")
   {
     String taskStr = "Here are your tasks:\n" + getTasksString();
@@ -151,15 +149,18 @@ void processNewMessage(TBMessage msg)
     processDoneTask(chatId);
   }
 
-  else if (text == "/exerise") {
-    processNewAlert(chatId,1);
+  else if (text == "/exercise")
+  {
+    processNewAlert(chatId, 1);
   }
 
-  else if (text == "/water") {
-    processNewAlert(chatId,0);
+  else if (text == "/water")
+  {
+    processNewAlert(chatId, 0);
   }
 
-  else if (text == "/alertlist") {
+  else if (text == "/alertlist")
+  {
     String alertStr = "Here are your alerts:\n" + getAlertsString();
     myBot.sendMessage(chatId, alertStr);
   }
@@ -174,21 +175,24 @@ void processNewMessage(TBMessage msg)
   }
 }
 
-void processNewAlert(unsigned int chatId, byte aType) {
+void processNewAlert(unsigned int chatId, byte aType)
+{
   TBMessage msg;
-  int num; 
-  myBot.sendMessage(chatId, "Alerts will be randmised between 0900 to 1700.\nEnter number of alert (1(default) to 5):");
+  int num;
+  myBot.sendMessage(chatId, "Alerts will be randmised between 0900 to 1700.\nEnter number of alert [1 (default) to 5]:");
   while (myBot.getNewMessage(msg) != CTBotMessageText)
   {
     delay(BOT_MIN_REFRESH_DELAY);
   }
-  if (msg.text.length() > 1) {
+  if (msg.text.length() > 1)
+  {
     num = 1;
   }
-  else {
+  else
+  {
     (msg.text.toInt() == 0) ? num = 1 : num = msg.text.toInt();
   }
-  
+
   unsigned int exitCode = addAlert(num, aType);
 
   if (exitCode)
@@ -205,11 +209,12 @@ unsigned int addAlert(int num, byte aType)
 {
   if (aLength + num < 10)
   {
-    for (int i = 0; i<num; i++) {
-      aHour[aLength] = random(9,18);
-      aMin[aLength] = random(0,60);
+    for (int i = 0; i < num; i++)
+    {
+      aHour[aLength] = random(9, 17);
+      aMin[aLength] = random(0, 60);
       aTypeL[aLength] = aType;
-      aLength++; 
+      aLength++;
     }
     return 0;
   }
@@ -330,16 +335,26 @@ unsigned int markTaskDone(unsigned int idx)
   return 1;
 }
 
-String getAlertsString(){
-  if (aLength == 0) {
-    return "No tasks yet!";
+String getAlertsString()
+{
+  if (aLength == 0)
+  {
+    return "No alerts yet!";
   }
+
+  quickSort(aHour, aMin, aTypeL, 0, aLength - 1);
+
   String alertStr = "";
 
   for (int i = 0; i < aLength; i++)
   {
     String type = (aTypeL[i] == 0) ? "Water" : "Exercise";
-    alertStr.concat(String(i + 1) + ": " + aHour[i] + ":" + aMin[i] + " [" + type + "]\n");
+    String hour = (aHour[i] < 10) ? "0" + String(aHour[i]) : String(aHour[i]);
+    String min = (aMin[i] < 10) ? "0" + String(aMin[i]): String(aMin[i]);
+
+    alertStr += String(i + 1) + ": ";
+
+    alertStr += hour + ":" + min + " " + " [" + type + "]\n";
   }
 
   return alertStr;
@@ -378,77 +393,132 @@ void printCurrentTime()
   Serial.println(timeClient.getSeconds());
 }
 
+void alertLight(byte aType)
+{
 
-void alertLight(byte aType) {
-
-  for (int i=0; i<NUM_LEDS; i++ )
+  for (int i = 0; i < NUM_LEDS; i++)
   {
     // alert for lesson
-    if (aType == 0) {
+    if (aType == 0)
+    {
       leds[i] = 0xFF0000;
     }
     // alert for water
-    else if (aType == 1) {
+    else if (aType == 1)
+    {
       leds[i] = 0x0000FF;
     }
     // alert for exercise
-    else {
+    else
+    {
       leds[i] = 0x00FF00;
     }
     FastLED.setBrightness(10);
-  } 
-
-  if (USER != 0) {
-    switch (aType) {
-      case 0:
-        myBot.sendMessage(USER, "ALERT! LESSON STARTING");
-        break ;
-      case 1:
-        myBot.sendMessage(USER, "ALERT! DRINK WATER");
-        break;
-      case 2:
-        myBot.sendMessage(USER, "ALERT! PHYSICAL ACTIVITY TIME");
-        break;
-    } 
   }
 
-
-
-  for (int i=0; i<10; i++) {
-    FastLED.show();
-    delay (500);
-    FastLED.clear();  // clear all pixel data
-  }
-
-}
-
-void taskLight(Task tasks[], unsigned int numTask) {
-  FastLED.clear();
-  byte high,med,low = 0;
-  for (int i=0; i<numTask; i++){
-    switch (tasks[i].prio) {
-      case 0:
-        low++;
-        break ;
-      case 1:
-        med++;
-        break;
-      case 2:
-        high++;
-        break;
+  if (USER != 0)
+  {
+    switch (aType)
+    {
+    case 0:
+      myBot.sendMessage(USER, "ALERT! LESSON STARTING");
+      break;
+    case 1:
+      myBot.sendMessage(USER, "ALERT! DRINK WATER");
+      break;
+    case 2:
+      myBot.sendMessage(USER, "ALERT! PHYSICAL ACTIVITY TIME");
+      break;
     }
   }
-  for(int i=0; i<high; i++){
-      leds[i] = 0xFF0000;
-      FastLED.setBrightness(30);    
+
+  for (int i = 0; i < 10; i++)
+  {
+    FastLED.show();
+    delay(500);
+    FastLED.clear(); // clear all pixel data
   }
-  for(int i=high; i<med+high; i++){
-      leds[i] = 0xFF8000;
-      FastLED.setBrightness(30);    
+}
+
+void taskLight(Task tasks[], unsigned int numTask)
+{
+  FastLED.clear();
+  byte high, med, low = 0;
+  for (int i = 0; i < numTask; i++)
+  {
+    switch (tasks[i].prio)
+    {
+    case 0:
+      low++;
+      break;
+    case 1:
+      med++;
+      break;
+    case 2:
+      high++;
+      break;
+    }
   }
-  for(int i=med+high; i<low+med+high; i++){
-      leds[i] = 0x00FFFF;
-      FastLED.setBrightness(30);    
+  for (int i = 0; i < high; i++)
+  {
+    leds[i] = 0xFF0000;
+    FastLED.setBrightness(30);
   }
-  FastLED.show(); 
+  for (int i = high; i < med + high; i++)
+  {
+    leds[i] = 0xFF8000;
+    FastLED.setBrightness(30);
+  }
+  for (int i = med + high; i < low + med + high; i++)
+  {
+    leds[i] = 0x00FFFF;
+    FastLED.setBrightness(30);
+  }
+  FastLED.show();
+}
+
+void swap(int *a, int *b)
+{
+  int temp = *a;
+  *a = *b;
+  *b = temp;
+}
+
+void swap(byte *a, byte *b)
+{
+  byte temp = *a;
+  *a = *b;
+  *b = temp;
+}
+
+int partition(int hour[], int min[], byte type[], int low, int high)
+{
+  int hrPivot = hour[high];
+  int minPivot = min[high];
+
+  int i = (low - 1);
+  for (int j = low; j <= high - 1; j++)
+  {
+    if ((hour[j] < hrPivot) || (hour[j] == hrPivot && min[j] <= minPivot))
+    {
+      i++;
+      swap(&hour[i], &hour[j]);
+      swap(&min[i], &min[j]);
+      swap(&type[i], &type[j]);
+    }
+  }
+  swap(&hour[i + 1], &hour[high]);
+  swap(&min[i + 1], &min[high]);
+  swap(&type[i + 1], &type[high]);
+  return (i + 1);
+}
+
+void quickSort(int hour[], int min[], byte type[], int low, int high)
+{
+  if (low < high)
+  {
+    int pi = partition(hour, min, type, low, high);
+    quickSort(hour, min, type, low, pi - 1);
+    quickSort(hour, min, type, pi + 1, high);
+  }
 }
