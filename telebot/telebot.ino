@@ -22,6 +22,8 @@ const char *TELE_BOT_TOKEN = "5097903121:AAF2d-VcKmdLbL9baufQD9cecGXo-g5aHbo";
 const char *WIFI_SSID = "Xiaomi_CAA7";
 const char *WIFI_PWD = "notgonnatellu";
 
+int USER = 0;
+
 /*
 Time pooling parameters
 */
@@ -62,7 +64,7 @@ void setup()
   FastLED.clear();
   FastLED.show();
   Serial.println("LED Setup");
-  alertLight();
+  alertLight(0);
 
   // blocks until connects
   myBot.wifiConnect(WIFI_SSID, WIFI_PWD);
@@ -121,6 +123,7 @@ void loop()
 void processNewMessage(TBMessage msg)
 {
   int chatId = msg.sender.id;
+  USER = msg.sender.id;
   String fromUserName = msg.sender.username;
   String text = msg.text;
 
@@ -307,18 +310,47 @@ void printCurrentTime()
 }
 
 
-void alertLight() {
+void alertLight(byte aType) {
+
   for (int i=0; i<NUM_LEDS; i++ )
   {
+    // alert for lesson
+    if (aType == 0) {
       leds[i] = 0xFF0000;
-      FastLED.setBrightness(10);
+    }
+    // alert for water
+    else if (aType == 1) {
+      leds[i] = 0x0000FF;
+    }
+    // alert for exercise
+    else {
+      leds[i] = 0x00FF00;
+    }
+    FastLED.setBrightness(10);
   } 
-  FastLED.show();
-  delay (500);
-  FastLED.clear();  // clear all pixel data
-  FastLED.show();
-  delay (500);
-  FastLED.clear();
+
+  if (USER != 0) {
+    switch (aType) {
+      case 0:
+        myBot.sendMessage(USER, "ALERT! LESSON STARTING");
+        break ;
+      case 1:
+        myBot.sendMessage(USER, "ALERT! DRINK WATER");
+        break;
+      case 2:
+        myBot.sendMessage(USER, "ALERT! PHYSICAL ACTIVITY TIME");
+        break;
+    } 
+  }
+
+
+
+  for (int i=0; i<10; i++) {
+    FastLED.show();
+    delay (500);
+    FastLED.clear();  // clear all pixel data
+  }
+
 }
 
 void taskLight(Task tasks[], unsigned int numTask) {
