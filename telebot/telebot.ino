@@ -275,7 +275,7 @@ void processDoneTask(unsigned int chatId)
   myBot.sendMessage(chatId, "Select index of task to be marked as done\n" + tasksStr);
 
   TBMessage msg;
-  while (!myBot.getNewMessage(msg))
+  while (myBot.getNewMessage(msg) != CTBotMessageText)
   {
     delay(BOT_MIN_REFRESH_DELAY);
   }
@@ -284,7 +284,7 @@ void processDoneTask(unsigned int chatId)
   while (selectedIdx < 1 || selectedIdx > currLength)
   {
     myBot.sendMessage(chatId, "Invalid index, please send again");
-    while (!myBot.getNewMessage(msg))
+    while (myBot.getNewMessage(msg) != CTBotMessageText)
     {
       delay(BOT_MIN_REFRESH_DELAY);
     }
@@ -350,7 +350,7 @@ String getAlertsString()
   {
     String type = (aTypeL[i] == 0) ? "Water" : "Exercise";
     String hour = (aHour[i] < 10) ? "0" + String(aHour[i]) : String(aHour[i]);
-    String min = (aMin[i] < 10) ? "0" + String(aMin[i]): String(aMin[i]);
+    String min = (aMin[i] < 10) ? "0" + String(aMin[i]) : String(aMin[i]);
 
     alertStr += String(i + 1) + ": ";
 
