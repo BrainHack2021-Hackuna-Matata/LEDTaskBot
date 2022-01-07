@@ -1,5 +1,15 @@
 # LED Task Bot
 
+## Team
+
+Team **#96A Hackuna Matata**
+
+|Name       |ID    |
+|:---------:|:----:|
+|Ng Ho Chi  |#156A |
+|Teoh Xu En |#347L |
+|Chen Xihao |#433N |
+
 ## Description
 
 Our bot is a 3 in 1 hardware system that infuses convenience and simplicity, making it fun and easy to keep your life organised.
@@ -46,4 +56,7 @@ To build our bot, we used the [ESP8266](https://www.espressif.com/en/products/so
 
 ### Software
 
-We made use of the [Arduino IDE](https://www.arduino.cc/en/software).
+The [Arduino IDE](https://www.arduino.cc/en/software) and C++ are used to write the core software for this project. We rely mainly on the following libraries:
+
+- CTBot: Telegram bot to handle communcation between ESP8266 and user.
+- FastLED: communication and command between ESP8266 and the connected LED strip.
