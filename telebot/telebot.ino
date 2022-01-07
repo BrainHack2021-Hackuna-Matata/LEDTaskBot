@@ -15,6 +15,9 @@
 
 CRGB leds[NUM_LEDS];
 
+DynamicJsonDocument doc(4096);
+StaticJsonDocument<200> filter;
+
 byte LOW_PRIO = 0;
 byte MED_PRIO = 1;
 byte HIGH_PRIO = 2;
@@ -164,18 +167,21 @@ void addMod(int id, mod modList[], int* length){
   TBMessage m;
   mod currmod;
   times time;
-  DynamicJsonDocument doc(4096);
-  StaticJsonDocument<200> filter;
+
   filter["semesterData"][0]["timetable"][0] = true;
   filter["semesterData"][0]["semester"] = true;
   myBot.sendMessage(id, "Enter a Module Code");
-  delay(BOT_MIN_REFRESH_DELAY);
-  while(myBot.getNewMessage(m) != CTBotMessageText){delay(BOT_MIN_REFRESH_DELAY);}
+  //delay(BOT_MIN_REFRESH_DELAY);
+  while(myBot.getNewMessage(m) != CTBotMessageText){
+    delay(BOT_MIN_REFRESH_DELAY);
+  }
   currmod.modCode = String(m.text);
-  delay(BOT_MIN_REFRESH_DELAY);
+  //delay(BOT_MIN_REFRESH_DELAY);
   myBot.sendMessage(id, "Enter the class code for the module " + currmod.modCode);
-  delay(BOT_MIN_REFRESH_DELAY);
-  while(myBot.getNewMessage(m) != CTBotMessageText){delay(BOT_MIN_REFRESH_DELAY);}
+  //delay(BOT_MIN_REFRESH_DELAY);
+  while(myBot.getNewMessage(m) != CTBotMessageText){
+    delay(BOT_MIN_REFRESH_DELAY);
+  }
   currmod.classNo = String(m.text);
   myBot.sendMessage(id, "The module " + currmod.modCode + " with class number " + currmod.classNo + " has been added.");
   modList[*length] = currmod;
@@ -198,8 +204,7 @@ void addMod(int id, mod modList[], int* length){
       numTimes++;
     }
   }
-  // String s;
-  // serializeJson(doc, s);
+
   myBot.sendMessage(id, ddd);
 }
 
