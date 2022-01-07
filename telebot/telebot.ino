@@ -62,7 +62,7 @@ void setup()
   FastLED.clear();
   FastLED.show();
   Serial.println("LED Setup");
-  alert();
+  alertLight();
 
   // blocks until connects
   myBot.wifiConnect(WIFI_SSID, WIFI_PWD);
@@ -307,7 +307,7 @@ void printCurrentTime()
 }
 
 
-void alert() {
+void alertLight() {
   for (int i=0; i<NUM_LEDS; i++ )
   {
       leds[i] = 0xFF0000;
@@ -350,3 +350,4 @@ void taskLight(Task tasks[], unsigned int numTask) {
   }
   FastLED.show(); 
 }
+
