@@ -93,7 +93,7 @@ void setup()
   Serial.begin(115200);
 
   //set up ledstrip
-  FastLED.addLeds<NEOPIXEL, LED_PIN>(leds, NUM_LEDS);
+  FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, NUM_LEDS);
   FastLED.setMaxPowerInVoltsAndMilliamps(3, 120);
   FastLED.clear();
   FastLED.show();
@@ -154,44 +154,19 @@ void loop()
 
   taskLight(tasks, currLength);
   delay(100);
-  alertNextClass();
-  delay(100);
+  //alertNextClass();
+  //delay(100);
 
-  int hours[2] = {9,9};
-  int mins[2] = {50, 52};
+  int hours[2] = {11,11};
+  int mins[2] = {51, 59};
   byte typel[2] = {1,2}; //exercise is 1, water is 2
   
 
   alertIfWithinFiveMinutes(hours, mins, 2, typel);
+  delay(100);
 }
 
-void Fire2012()
-{
-// Array of temperature readings at each simulation cell
-  static uint8_t heat[NUM_LEDS];
 
-  // Step 1.  Cool down every cell a little
-    for( int i = 0; i < NUM_LEDS; i++) {
-      heat[i] = qsub8( heat[i],  random8(0, ((55 * 10) / NUM_LEDS) + 2));
-    }
-  
-    // Step 2.  Heat from each cell drifts 'up' and diffuses a little
-    for( int k= NUM_LEDS - 1; k >= 2; k--) {
-      heat[k] = (heat[k - 1] + heat[k - 2] + heat[k - 2] ) / 3;
-    }
-    
-    // Step 3.  Randomly ignite new 'sparks' of heat near the bottom
-    if( random8() < 120 ) {
-      int y = random8(7);
-      heat[y] = qadd8( heat[y], random8(160,255) );
-    }
-
-    // Step 4.  Map from heat cells to LED colors
-    for( int j = 0; j < NUM_LEDS; j++) {
-      CRGB color = HeatColor( heat[j]);
-      leds[j] = color;
-    }
-}
 
 String getTimetable(String link){
   HTTPClient http;
@@ -205,26 +180,6 @@ String getTimetable(String link){
   }
   http.end();
   return payload;
-}
-
-void blink(int color){
-  // 0 is red, 1 is green, 2 is blue
-  for (int j = 0; j < 10; j++){
-    fill_solid(leds, NUM_LEDS, color == 1 ? 0x008000 : color == 2 ? 0x003C5F : 0xFF0000);
-    FastLED.show();
-    FastLED.show();
-    FastLED.show();
-    FastLED.show();
-    delay(500);
-    fill_solid(leds, NUM_LEDS, 0x000000);
-    FastLED.show();
-    FastLED.show();
-    FastLED.show();
-    FastLED.show();
-    delay(500);
-  }
-  fill_solid(leds, NUM_LEDS, 0x000000);
-  FastLED.show();
 }
 
 void addMod(int id, mod modList[], int* length){
@@ -269,7 +224,7 @@ void addMod(int id, mod modList[], int* length){
       numTimes++;
     }
   }
-  
+
   myBot.sendMessage(id, ddd);
 }
 
@@ -355,20 +310,6 @@ void processNewMessage(TBMessage msg)
   else if (text == "/help" || text == "/start")
   {
     myBot.sendMessage(chatId, getHelpString());
-  }
-  else if (text == "/lightshow")
-  {
-    TBMessage m;
-    while(myBot.getNewMessage(m) != CTBotMessageText){
-
-      Fire2012(); // run simulation frame
-    
-      FastLED.show(); // display this frame
-      FastLED.delay(1000 / 60);
-      if(m.text == "/end"){
-        break;
-      }
-    }
   }
   else
   {
@@ -581,9 +522,7 @@ String getTasksString()
 String getHelpString()
 {
   String helpStr = "Here are the available commands:\n/list to list all tasks\n/newtask to add a new task\n/donetask to mark a task as done\n";
-  helpStr += "/exercise to create exercise alerts\n/water to create water alerts\n/alertlist to get your list of alerts\n";
-  helpStr += "/addmod to add module code and class number\n/listmod to see all your mods by module code\n/listtt to see your timetable";
-  helpStr += "\n\ntype /lightshow to see lights move around";
+  helpStr += "/exercise to create exercise alerts\n/water to create water alerts\n/alertlist to get your list of alerts";
   return helpStr;
 }
 
@@ -711,6 +650,26 @@ void quickSort(int hour[], int min[], byte type[], int low, int high)
   }
 }
 
+void blink(int color){
+  // 0 is red, 1 is green, 2 is blue
+  for (int j = 0; j < 10; j++){
+    fill_solid(leds, NUM_LEDS, color == 1 ? 0x008000 : color == 2 ? 0x003C5F : 0xFF0000);
+    FastLED.show();
+    FastLED.show();
+    FastLED.show();
+    FastLED.show();
+    delay(500);
+    fill_solid(leds, NUM_LEDS, 0x000000);
+    FastLED.show();
+    FastLED.show();
+    FastLED.show();
+    FastLED.show();
+    delay(500);
+  }
+  fill_solid(leds, NUM_LEDS, 0x000000);
+  FastLED.show();
+}
+
 void alertNextClass()
 {
 //    String today = DAYS_OF_WEEK[timeClient.getDay()];
@@ -734,7 +693,6 @@ void alertNextClass()
             if (timetable[i].day == today && isWithinFiveMin)
             {
                 blink(0);
-
                 myBot.sendMessage(USER, "ALERT! LESSON STARTING");
                 
                 lastAlertTime = millis();
@@ -756,7 +714,15 @@ void alertIfWithinFiveMinutes(int hours[], int mins[], int length, byte type[])
         {
             if ((hours[i] == currHr && mins[i] - currMin <= 2) || (hours[i] == currHr + 1 && mins[i] + 60 - currMin <= 2))
             {
-              type[i] == 1 ? blink(1) : blink(2);
+ 
+                if (type[i] == 1) {
+                  blink(1);
+                }
+                else {
+                  blink(2);
+                }
+
+
               
               if (type[i] == 1) {
                 myBot.sendMessage(USER, "ALERT! TIME FOR PHYSICAL ACTIVITY");
