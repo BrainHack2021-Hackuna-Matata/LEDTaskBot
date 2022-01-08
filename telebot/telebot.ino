@@ -78,6 +78,13 @@ struct Task tasks[MAX_LENGTH];
 unsigned int currLength = 0;
 const String PRIORITY_STRING_MAP[3] = {"Low", "Med", "High"};
 
+
+// CHANGE THIS
+const unsigned long MIN_DELAY_BEFORE_ALERT = 60000*2; // 2 minutes
+unsigned long lastAlertTime = millis();
+
+const String DAYS_OF_WEEK[7] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+
 void setup()
 {
   /*
@@ -146,8 +153,19 @@ void loop()
   }
 
   taskLight(tasks, currLength);
-  delay(300);
+  delay(100);
+  alertNextClass();
+  delay(100);
+
+  int hours[2] = {8,8};
+  int mins[2] = {12, 16};
+  byte typel[2] = {1,2}; //exercise is 1, water is 2
+  
+
+  alertIfWithinFiveMinutes(hours, mins, 2, typel);
 }
+
+
 
 String getTimetable(String link){
   HTTPClient http;
@@ -191,7 +209,8 @@ void addMod(int id, mod modList[], int* length){
   deserializeJson(doc, json, DeserializationOption::Filter(filter));
   int semester = 0;
   Serial.println(String(doc["semesterData"][0]["semester"].as<unsigned int>()));
-  if(doc["semesterData"][0]["semester"].as<unsigned int>() == 1){
+  if (doc["semesterData"][0]["semester"].as<String>().toInt() == 1)
+  {
     semester = 1;
   }
   for(int i = 0; i < doc["semesterData"][semester]["timetable"].as<JsonArray>().size(); i++){
@@ -268,7 +287,7 @@ void processNewMessage(TBMessage msg)
 
   else if (text == "/water")
   {
-    processNewAlert(chatId, 0);
+    processNewAlert(chatId, 2);
   }
 
   else if (text == "/alertlist")
@@ -470,7 +489,7 @@ String getAlertsString()
 
   for (int i = 0; i < aLength; i++)
   {
-    String type = (aTypeL[i] == 0) ? "Water" : "Exercise";
+    String type = (aTypeL[i] == 1) ? "Water" : "Exercise";
     String hour = (aHour[i] < 10) ? "0" + String(aHour[i]) : String(aHour[i]);
     String min = (aMin[i] < 10) ? "0" + String(aMin[i]): String(aMin[i]);
 
@@ -518,47 +537,32 @@ void printCurrentTime()
 void alertLight(byte aType)
 {
 
-  for (int i = 0; i < NUM_LEDS; i++)
+  for (int j = 0; j < 5; j++)
   {
-    // alert for lesson
-    if (aType == 0)
+    for (int i = 0; i < NUM_LEDS; i++)
     {
-      leds[i] = 0xFF0000;
+      // alert for lesson
+      if (aType == 0)
+      {
+        leds[i] = 0xFF0000;
+      }
+      // alert for water
+      else if (aType == 1)
+      {
+        leds[i] = 0x0000FF;
+      }
+      // alert for exercise
+      else
+      {
+        leds[i] = 0x00FF00;
+      }
+      FastLED.setBrightness(10);
     }
-    // alert for water
-    else if (aType == 1)
-    {
-      leds[i] = 0x0000FF;
-    }
-    // alert for exercise
-    else
-    {
-      leds[i] = 0x00FF00;
-    }
-    FastLED.setBrightness(10);
-  }
-
-  if (USER != 0)
-  {
-    switch (aType)
-    {
-    case 0:
-      myBot.sendMessage(USER, "ALERT! LESSON STARTING");
-      break;
-    case 1:
-      myBot.sendMessage(USER, "ALERT! DRINK WATER");
-      break;
-    case 2:
-      myBot.sendMessage(USER, "ALERT! PHYSICAL ACTIVITY TIME");
-      break;
-    }
-  }
-
-  for (int i = 0; i < 10; i++)
-  {
     FastLED.show();
-    delay(500);
-    FastLED.clear(); // clear all pixel data
+    delay(100);
+    FastLED.clear();
+    FastLED.show();
+    delay(100);// clear all pixel data
   }
 }
 
@@ -643,4 +647,86 @@ void quickSort(int hour[], int min[], byte type[], int low, int high)
     quickSort(hour, min, type, low, pi - 1);
     quickSort(hour, min, type, pi + 1, high);
   }
+}
+
+void alertNextClass()
+{
+//    String today = DAYS_OF_WEEK[timeClient.getDay()];
+//    unsigned int currHr = timeClient.getHours();
+//    unsigned int currMin = timeClient.getMinutes();
+
+    // Change this to hard code time for testing
+    String today = "Monday";
+    unsigned int currHr = 7;
+    unsigned int currMin = 55;
+
+    if (millis() - lastAlertTime > MIN_DELAY_BEFORE_ALERT)
+    {
+        for (int i = 0; i < numTimes; i++)
+        {
+            unsigned int lessonHr = timetable[i].startTime.substring(0, 2).toInt();
+            unsigned int lessonMin = timetable[i].startTime.substring(2, 4).toInt();
+
+            bool isWithinFiveMin = (currHr == lessonHr && (lessonMin - currMin) <= 5) || (currHr == (lessonHr - 1) && lessonMin + 60 - currMin <= 5);
+
+            if (timetable[i].day == today && isWithinFiveMin)
+            {
+              for (int j = 0; j < 10; j++){
+                fill_solid(leds, NUM_LEDS, 0xFF0000);
+                FastLED.show();
+                delay(500);
+                FastLED.clear(); // clear all pixel data
+                FastLED.show();
+                delay(500);
+              }
+
+                myBot.sendMessage(USER, "ALERT! LESSON STARTING");
+                
+                lastAlertTime = millis();
+            }
+        }
+    }
+}
+
+void alertIfWithinFiveMinutes(int hours[], int mins[], int length, byte type[])
+{
+    unsigned int currHr = timeClient.getHours();
+    unsigned int currMin = timeClient.getMinutes();
+    Serial.println(currHr);
+    Serial.println(currMin);
+
+    if (millis() - lastAlertTime > MIN_DELAY_BEFORE_ALERT)
+    {
+        for (int i = 0; i < length; i++)
+        {
+            if ((hours[i] == currHr && mins[i] - currMin <= 2) || (hours[i] == currHr + 1 && mins[i] + 60 - currMin <= 2))
+            {
+              for (int j = 0; j < 10; j++){
+ 
+                if (type[i] == 1) {
+                  fill_solid(leds, NUM_LEDS, 0x008000);
+                }
+                else {
+                  fill_solid(leds, NUM_LEDS, 0x003C5F);
+                }
+
+                FastLED.show();
+                delay(500);
+                FastLED.clear(); // clear all pixel data
+                FastLED.show();
+                delay(500);
+              }
+              
+              if (type[i] == 1) {
+                myBot.sendMessage(USER, "ALERT! TIME FOR PHYSICAL ACTIVITY");
+              }
+              else {
+                myBot.sendMessage(USER, "ALERT! TIME FOR HYDRATION");
+              }
+                
+                
+              lastAlertTime = millis();
+            }
+        }
+    }
 }
