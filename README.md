@@ -76,4 +76,4 @@ The [Arduino IDE](https://www.arduino.cc/en/software) and C++ are used to write 
 - [CTBot](https://github.com/shurillu/CTBot): Telegram bot to handle communcation between ESP8266 and user.
 - [FastLED](https://fastled.io): offers control to the connected LED strip from the ESP8266 board.
 
-Source file located in [`LEDTaskBot/telebot/telebot.ino`](telebot/telebot.ino).
+Source file located in [`LEDTaskBot/telebot/telebot.ino`](./telebot/telebot.ino).
