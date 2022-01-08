@@ -1,12 +1,22 @@
 # LED Task Bot
 
+## Team
+
+Team **#96A Hackuna Matata**
+
+|Name       |ID    |
+|:---------:|:----:|
+|Ng Ho Chi  |#156A |
+|Teoh Xu En |#347L |
+|Chen Xihao |#433N |
+
 ## Description
 
-Our bot is a 3 in 1 hardware system that infuses convenience and simplicity, making it fun and easy to keep your life organised.
+Our project implements a Telegram bot that controls a 3-in-1 hardware system on chip that infuses convenience and simplicity, making it fun and easy to keep your life organised.
 
 ## Components
 
-Our bot is made up of three parts - a Module Timetable Reminder System, a Healthy Living Encouragement Tool as well as a Task Prioritization Organiser.
+The Telegram bot is made up of three parts - a Module Timetable Reminder System, a Healthy Living Encouragement Tool as well as a Task Prioritization Organiser.
 
 ### Timetable Reminder System
 
@@ -20,23 +30,25 @@ Based on the information from the API endpoint, we can get the timings and days 
 
 ![image](./assets/JSON.png)
 
-Then, our ESP8266 will keep track of the time and remind people about their lessons when their lessons are about to start. No reason to go to class late anymore!
+Then, our ESP8266 will keep track of the time and remind people about their lessons when their lessons are about to start by flashing the LED lights repeatedly in red about 5 minutes before a lesson start. No reason to go to class late anymore!
 
 ### Healthy Living Encouragement Tool
 
 Sitting around too long is bad for your health. That's why our Healthy Living Encouragement Tool surprises you with random reminders to do things that are beneficial to your health.
 
-Just input the number of reminders you want the bot to have, as well as the time range you want to be reminded. Our bot will take care of the rest.
+Just input the number of reminders you want the bot to have, as well as the time range you want to be reminded. Our bot will take care of the rest by repeatedly flashing a strip of green (drink water) or cyan (stand up to move) LEDs.
 
 ### Task Prioritization Organiser
 
 Are you always unsure about how many tasks you have to complete at any given moment? Want to have fun but afraid of missing an important deadline? No problem! Our Task Prioritization Organiser makes it super simple to keep track of how many tasks you have, as well as how important each of those tasks are.
 
-Only a few green LED lights show up? That's a cue that you can go have fun. But rack up too many red LED lights and you'll have to spend your time at home finishing your tasks.
+We denote each task using a single LED bulb. Low priority tasks are shown in cyan, medium ones are in orange and each high priority task lights up a red bulb. Bulbs are updated in real time, as tasks are added or marked as completed.
+
+Only a few cyan LED lights show up? That's a cue that you can go have fun. But rack up too many red LED lights and you'll have to spend your time at home finishing your tasks.
 
 ## Motivation
 
-We challenged ourselves to keep to as low of a budget as possible while still coming up with something that people would feel is useful. Something that we felt would fit this criteria would be a minimalistic system for self-organisation.
+We challenged ourselves to keep to as low of a budget as possible while still coming up with something that people would feel is useful. Something that we felt would fit this criteria would be a minimalistic system for self-organisation. In totum, the LED strip and the ESP8266 cost around a mere $15.
 
 ## Tech/Frameworks used
 
@@ -46,4 +58,9 @@ To build our bot, we used the [ESP8266](https://www.espressif.com/en/products/so
 
 ### Software
 
-We made use of the [Arduino IDE](https://www.arduino.cc/en/software).
+The [Arduino IDE](https://www.arduino.cc/en/software) and C++ are used to write the core software for this project. We rely mainly on the following libraries:
+
+- CTBot: Telegram bot to handle communcation between ESP8266 and user.
+- FastLED: communication and command between ESP8266 and the connected LED strip.
+
+Source file located in (`LEDTaskBot/telebot/telebot.ino`)[telebot/telebot.ino].
