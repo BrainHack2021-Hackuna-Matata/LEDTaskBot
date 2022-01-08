@@ -154,15 +154,16 @@ void loop()
 
   taskLight(tasks, currLength);
   delay(100);
-  alertNextClass();
-  delay(100);
+  //alertNextClass();
+  //delay(100);
 
-  int hours[2] = {8,8};
-  int mins[2] = {12, 16};
+  int hours[2] = {11,11};
+  int mins[2] = {51, 59};
   byte typel[2] = {1,2}; //exercise is 1, water is 2
   
 
   alertIfWithinFiveMinutes(hours, mins, 2, typel);
+  delay(100);
 }
 
 
@@ -649,6 +650,26 @@ void quickSort(int hour[], int min[], byte type[], int low, int high)
   }
 }
 
+void blink(int color){
+  // 0 is red, 1 is green, 2 is blue
+  for (int j = 0; j < 10; j++){
+    fill_solid(leds, NUM_LEDS, color == 1 ? 0x008000 : color == 2 ? 0x003C5F : 0xFF0000);
+    FastLED.show();
+    FastLED.show();
+    FastLED.show();
+    FastLED.show();
+    delay(500);
+    fill_solid(leds, NUM_LEDS, 0x000000);
+    FastLED.show();
+    FastLED.show();
+    FastLED.show();
+    FastLED.show();
+    delay(500);
+  }
+  fill_solid(leds, NUM_LEDS, 0x000000);
+  FastLED.show();
+}
+
 void alertNextClass()
 {
 //    String today = DAYS_OF_WEEK[timeClient.getDay()];
@@ -671,15 +692,7 @@ void alertNextClass()
 
             if (timetable[i].day == today && isWithinFiveMin)
             {
-              for (int j = 0; j < 10; j++){
-                fill_solid(leds, NUM_LEDS, 0xFF0000);
-                FastLED.show();
-                delay(500);
-                FastLED.clear(); // clear all pixel data
-                FastLED.show();
-                delay(500);
-              }
-
+                blink(0);
                 myBot.sendMessage(USER, "ALERT! LESSON STARTING");
                 
                 lastAlertTime = millis();
@@ -701,21 +714,15 @@ void alertIfWithinFiveMinutes(int hours[], int mins[], int length, byte type[])
         {
             if ((hours[i] == currHr && mins[i] - currMin <= 2) || (hours[i] == currHr + 1 && mins[i] + 60 - currMin <= 2))
             {
-              for (int j = 0; j < 10; j++){
  
                 if (type[i] == 1) {
-                  fill_solid(leds, NUM_LEDS, 0x008000);
+                  blink(1);
                 }
                 else {
-                  fill_solid(leds, NUM_LEDS, 0x003C5F);
+                  blink(2);
                 }
 
-                FastLED.show();
-                delay(500);
-                FastLED.clear(); // clear all pixel data
-                FastLED.show();
-                delay(500);
-              }
+
               
               if (type[i] == 1) {
                 myBot.sendMessage(USER, "ALERT! TIME FOR PHYSICAL ACTIVITY");
