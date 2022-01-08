@@ -77,3 +77,10 @@ The [Arduino IDE](https://www.arduino.cc/en/software) and C++ are used to write 
 - [FastLED](https://fastled.io): offers control to the connected LED strip from the ESP8266 board.
 
 Source file located in [`LEDTaskBot/telebot/telebot.ino`](./telebot/telebot.ino).
+
+## Challenges we ran into
+
+- Limited memory on the SoC
+- Limited processing power
+- Untimely response from the telegram bot
+- HTTP requests using C++ and parsing JSON response were a pain in the ass...
