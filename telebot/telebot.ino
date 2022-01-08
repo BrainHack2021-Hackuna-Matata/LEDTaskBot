@@ -157,12 +157,12 @@ void loop()
   //alertNextClass();
   //delay(100);
 
-  int hours[2] = {11,11};
-  int mins[2] = {51, 59};
-  byte typel[2] = {1,2}; //exercise is 1, water is 2
+  int hours[2] = {14};
+  int mins[2] = {32};
+  byte typel[2] = {2}; //exercise is 1, water is 2
   
 
-  alertIfWithinFiveMinutes(hours, mins, 2, typel);
+  alertIfWithinFiveMinutes(hours, mins, 1, typel);
   delay(100);
 }
 
@@ -490,7 +490,7 @@ String getAlertsString()
 
   for (int i = 0; i < aLength; i++)
   {
-    String type = (aTypeL[i] == 1) ? "Water" : "Exercise";
+    String type = (aTypeL[i] == 2) ? "Water" : "Exercise";
     String hour = (aHour[i] < 10) ? "0" + String(aHour[i]) : String(aHour[i]);
     String min = (aMin[i] < 10) ? "0" + String(aMin[i]): String(aMin[i]);
 
@@ -601,6 +601,7 @@ void taskLight(Task tasks[], unsigned int numTask)
     leds[i] = 0x00FFFF;
     FastLED.setBrightness(30);
   }
+  FastLED.show();
   FastLED.show();
 }
 
